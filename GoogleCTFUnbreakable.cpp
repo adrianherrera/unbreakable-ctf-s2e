@@ -76,10 +76,6 @@ void GoogleCTFUnbreakable::onSymbolicVariableCreation(S2EExecutionState *state, 
 
 void GoogleCTFUnbreakable::onTranslateInstruction(ExecutionSignal *signal, S2EExecutionState *state,
                                                   TranslationBlock *tb, uint64_t pc) {
-    if (!m_procDetector->isTracked(state)) {
-        return;
-    }
-
     if (pc == SUCCESS_ADDRESS) {
         signal->connect(sigc::mem_fun(*this, &GoogleCTFUnbreakable::onSuccess));
     } else if (pc == FAILURE_ADDRESS) {
@@ -88,6 +84,11 @@ void GoogleCTFUnbreakable::onTranslateInstruction(ExecutionSignal *signal, S2EEx
 }
 
 void GoogleCTFUnbreakable::onSuccess(S2EExecutionState *state, uint64_t pc) {
+    // Ensure that the unbreakable process is executing
+    if (!m_procDetector->isTracked(state)) {
+        return;
+    }
+
     // `results` is a vector containing pairs of strings and a vector of bytes. The string corresponds to the symbolic
     // variable's name while the vector of bytes is the actual solution
     std::vector<std::pair<std::string, std::vector<unsigned char>>> results;
@@ -115,6 +116,11 @@ void GoogleCTFUnbreakable::onSuccess(S2EExecutionState *state, uint64_t pc) {
 }
 
 void GoogleCTFUnbreakable::onFailure(S2EExecutionState *state, uint64_t pc) {
+    // Ensure that the unbreakable process is executing
+    if (!m_procDetector->isTracked(state)) {
+        return;
+    }
+
     // There is no reason to continue execution any further. So kill the state
     s2e()->getExecutor()->terminateStateEarly(*state, "Invalid path");
 }
